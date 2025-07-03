@@ -5,7 +5,9 @@ A Python library for creating PowerPoint presentations programmatically using py
 ## Features
 
 - **Programmatic PowerPoint Generation**: Create presentations using Python code
+- **Markdown Template Support**: Write presentations in markdown with YAML frontmatter
 - **Template System**: Reusable slide templates for consistent formatting
+- **Multiple Slide Types**: Title, content, section, and image slides
 - **Modern Python Tooling**: Built with uv for dependency management
 - **Task Management**: Moonrepo integration for streamlined development workflow
 - **Extensible Architecture**: Easy to extend with custom slide types and layouts
@@ -53,6 +55,49 @@ builder.add_content_slide("Key Points", [
 builder.save(Path("my_presentation.pptx"))
 ```
 
+### Creating from Markdown
+
+```bash
+# Create presentation from markdown template
+uv run python -m prez markdown presentation.md
+
+# With custom output name
+uv run python -m prez markdown presentation.md my_slides
+```
+
+Example markdown template:
+```markdown
+---
+title: "My Presentation"
+author: "Your Name"
+---
+
+<!-- type: title -->
+# Welcome
+## Introduction to Prez
+
+---
+
+# Key Features
+- Markdown-based authoring
+- Automatic PowerPoint generation
+- Multiple slide types
+- YAML frontmatter support
+
+---
+
+<!-- type: section -->
+# Getting Started
+Let's dive into the basics
+
+---
+
+<!-- type: image -->
+# Sample Chart
+![Growth Chart](charts/growth.png)
+This shows our progress over time.
+```
+
 ### Using Templates
 
 ```python
@@ -93,6 +138,7 @@ uv run python examples/demo.py
 
 # Run CLI
 uv run python -m prez demo
+uv run python -m prez markdown examples/sample_presentation.md
 ```
 
 ### Using Moonrepo
@@ -128,12 +174,16 @@ prez/
 │   ├── __init__.py     # Package exports
 │   ├── __main__.py     # CLI entry point
 │   ├── core.py         # Core presentation builder
+│   ├── markdown.py     # Markdown template parser
 │   └── templates.py    # Template system
 ├── tests/              # Test suite
 │   ├── test_core.py    # Core functionality tests
+│   ├── test_markdown.py # Markdown parsing tests
 │   └── test_templates.py # Template tests
 ├── examples/           # Example scripts
-│   └── demo.py         # Demo presentation
+│   ├── demo.py         # Demo presentation
+│   ├── markdown_demo.py # Markdown demo
+│   └── sample_presentation.md # Sample markdown template
 ├── outputs/            # Generated presentations
 ├── .moon/              # Moonrepo configuration
 │   └── workspace.yml   # Workspace settings
@@ -151,6 +201,9 @@ Main class for building presentations:
 - `add_title_slide(title, subtitle=None)` - Add a title slide
 - `add_content_slide(title, content)` - Add a content slide with bullet points
 - `add_image_slide(title, image_path, caption=None)` - Add a slide with an image
+- `add_section_slide(title, description=None)` - Add a section divider slide
+- `from_markdown(markdown_path, template_path=None)` - Create from markdown file
+- `build_from_template(template)` - Build from presentation template
 - `save(output_path)` - Save presentation to file
 - `get_slide_count()` - Get number of slides
 - `get_slide_titles()` - Get list of slide titles
@@ -163,6 +216,20 @@ Template system for creating reusable slide layouts:
 - `SlideTemplate.content_slide(title, content)` - Create content slide template
 - `SlideTemplate.image_slide(title, image_path, caption)` - Create image slide template
 - `SlideTemplate.section_slide(title, description)` - Create section slide template
+
+### MarkdownParser
+
+Parse markdown files into presentation templates:
+
+- `parse_file(markdown_path)` - Parse markdown file into presentation template
+- `parse_content(content, name)` - Parse markdown content string
+- `create_presentation_from_markdown(markdown_path)` - Convenience function
+
+### CLI Commands
+
+- `python -m prez demo` - Create demo presentation
+- `python -m prez create <name>` - Create basic presentation
+- `python -m prez markdown <file.md> [output]` - Create from markdown template
 
 ## Contributing
 

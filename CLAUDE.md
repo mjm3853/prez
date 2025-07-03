@@ -12,6 +12,7 @@ Prez is a Python library for creating PowerPoint presentations programmatically 
 
 - **PresentationBuilder** (`src/prez/core.py`): Main class for building presentations with methods for adding different slide types
 - **Template System** (`src/prez/templates.py`): Reusable slide templates and presentation templates with SlideTemplate and PresentationTemplate classes
+- **Markdown Parser** (`src/prez/markdown.py`): Converts markdown files with YAML frontmatter to presentation templates
 - **CLI Interface** (`src/prez/__main__.py`): Command-line interface for creating presentations and running demos
 
 ### Key Design Patterns
@@ -45,6 +46,7 @@ uv run python examples/demo.py
 # Run CLI
 uv run python -m prez demo
 uv run python -m prez create <name>
+uv run python -m prez markdown <file.md> [output]
 ```
 
 ### Task Management (moonrepo)
@@ -78,17 +80,21 @@ moon run build
 
 ```
 src/prez/           # Main package
-├── __init__.py     # Package exports (PresentationBuilder, SlideTemplate)
-├── __main__.py     # CLI entry point with demo and create commands
+├── __init__.py     # Package exports (PresentationBuilder, SlideTemplate, MarkdownParser)
+├── __main__.py     # CLI entry point with demo, create, and markdown commands
 ├── core.py         # PresentationBuilder class with slide creation methods
+├── markdown.py     # MarkdownParser for converting markdown to presentations
 └── templates.py    # Template classes (SlideTemplate, PresentationTemplate, SlideType)
 
 tests/              # Test suite
 ├── test_core.py    # Tests for PresentationBuilder functionality
+├── test_markdown.py # Tests for markdown parsing functionality
 └── test_templates.py # Tests for template system
 
 examples/           # Example scripts
-└── demo.py         # Comprehensive demo showing all features
+├── demo.py         # Comprehensive demo showing all features
+├── markdown_demo.py # Demo for markdown-based presentation creation
+└── sample_presentation.md # Sample markdown template
 
 outputs/            # Generated presentations (created automatically)
 ```
@@ -131,11 +137,84 @@ ls outputs/  # Check generated files
 # Test CLI
 uv run python -m prez demo
 uv run python -m prez create test_presentation
+uv run python -m prez markdown examples/sample_presentation.md
+```
+
+## Markdown Templates
+
+### Overview
+Prez supports creating presentations from markdown files with YAML frontmatter. This allows for version-controlled, text-based presentation authoring with automatic PowerPoint generation.
+
+### Markdown Format
+```markdown
+---
+title: "Presentation Title"
+author: "Author Name"
+---
+
+<!-- type: title -->
+# Main Title
+Subtitle text
+
+---
+
+# Content Slide
+- Bullet point one
+- Bullet point two
+- Regular text line
+
+---
+
+<!-- type: section -->
+# Section Divider
+Description of the section
+
+---
+
+<!-- type: image -->
+# Image Slide
+![Alt text](path/to/image.png)
+Caption text for the image
+```
+
+### Supported Slide Types
+- **Title slides**: `<!-- type: title -->` - Main presentation title with subtitle
+- **Content slides**: Default type with bullet points and text
+- **Section slides**: `<!-- type: section -->` - Chapter/section dividers  
+- **Image slides**: `<!-- type: image -->` - Images with captions
+
+### CLI Usage
+```bash
+# Convert markdown to presentation
+uv run python -m prez markdown presentation.md
+
+# With custom output name
+uv run python -m prez markdown presentation.md my_slides
+
+# Run markdown demo
+uv run python examples/markdown_demo.py
+```
+
+### Programmatic Usage
+```python
+from prez.core import PresentationBuilder
+from prez.markdown import MarkdownParser
+
+# Method 1: Using PresentationBuilder
+builder = PresentationBuilder.from_markdown(Path("presentation.md"))
+builder.save(Path("output.pptx"))
+
+# Method 2: Using MarkdownParser directly
+parser = MarkdownParser()
+template = parser.parse_file(Path("presentation.md"))
+builder = PresentationBuilder()
+builder.build_from_template(template)
+builder.save(Path("output.pptx"))
 ```
 
 ## Dependencies
 
-- **Core**: python-pptx (PowerPoint manipulation)
+- **Core**: python-pptx (PowerPoint manipulation), pyyaml (YAML parsing)
 - **Development**: pytest, ruff, black, mypy
 - **Python Version**: 3.12+ (uses modern type hints)
 - **Package Manager**: uv (modern Python package management)
@@ -147,3 +226,9 @@ uv run python -m prez create test_presentation
 - `.ruff.toml`: Ruff linting configuration
 - `.moon/workspace.yml`: Moonrepo workspace configuration
 - `moon.yml`: Project-specific moonrepo configuration
+
+## Development Best Practices
+
+- **Code Quality Workflow**: 
+  - After adding any code, always run linting, fix any issues, then run unit testing and fix any issues
+  - After adding code, linting, and testing, with all issues fixed, then update the readme.md and claude.md with details about the changes and any updated tasks to be run

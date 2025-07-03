@@ -6,6 +6,8 @@ from pptx import Presentation
 from pptx.slide import Slide
 from pptx.util import Inches
 
+from .templates import PresentationTemplate, SlideTemplate, SlideType
+
 
 class PresentationBuilder:
     """Main class for building presentations programmatically."""
@@ -112,6 +114,97 @@ class PresentationBuilder:
 
         self.slides.append(slide)
         return slide  # type: ignore[no-any-return]
+
+    def add_section_slide(self, title: str, description: str | None = None) -> Slide:
+        """Add a section divider slide.
+
+        Args:
+            title: Section title
+            description: Optional section description
+
+        Returns:
+            The created slide
+        """
+        slide_layout = self.presentation.slide_layouts[2]  # Section header layout
+        slide = self.presentation.slides.add_slide(slide_layout)
+
+        title_shape = slide.shapes.title
+        title_shape.text = title
+
+        if description and len(slide.placeholders) > 1:
+            content_shape = slide.placeholders[1]
+            content_shape.text = description
+
+        self.slides.append(slide)
+        return slide  # type: ignore[no-any-return]
+
+    def build_from_template(self, template: PresentationTemplate) -> None:
+        """Build presentation from a template.
+
+        Args:
+            template: Presentation template with slide definitions
+        """
+        for slide_template in template.slides:
+            self._add_slide_from_template(slide_template)
+
+    def _add_slide_from_template(self, slide_template: SlideTemplate) -> Slide:
+        """Add a slide from a slide template.
+
+        Args:
+            slide_template: Template defining the slide
+
+        Returns:
+            The created slide
+        """
+        slide_type = slide_template.slide_type
+        params = slide_template.params
+
+        if slide_type == SlideType.TITLE:
+            return self.add_title_slide(
+                params.get('title', ''),
+                params.get('subtitle', '')
+            )
+        elif slide_type == SlideType.CONTENT:
+            return self.add_content_slide(
+                params.get('title', ''),
+                params.get('content', [])
+            )
+        elif slide_type == SlideType.IMAGE:
+            return self.add_image_slide(
+                params.get('title', ''),
+                params.get('image_path', Path('placeholder.jpg')),
+                params.get('caption', '')
+            )
+        elif slide_type == SlideType.SECTION:
+            return self.add_section_slide(
+                params.get('title', ''),
+                params.get('description', '')
+            )
+        else:
+            # Default to content slide
+            return self.add_content_slide(
+                params.get('title', 'Untitled'),
+                params.get('content', [])
+            )
+
+    @classmethod
+    def from_markdown(cls, markdown_path: Path,
+                     template_path: Path | None = None) -> "PresentationBuilder":
+        """Create a presentation builder from a markdown template.
+
+        Args:
+            markdown_path: Path to markdown template file
+            template_path: Optional PowerPoint template file
+
+        Returns:
+            Configured presentation builder
+        """
+        from .markdown import create_presentation_from_markdown
+
+        builder = cls(template_path)
+        presentation_template = create_presentation_from_markdown(markdown_path, template_path)
+        builder.build_from_template(presentation_template)
+        return builder
 
     def save(self, output_path: Path) -> None:
         """Save the presentation to a file.

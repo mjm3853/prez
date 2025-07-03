@@ -16,6 +16,7 @@ def main() -> None:
         print("Commands:")
         print("  demo - Run a demo presentation")
         print("  create <name> - Create a new presentation")
+        print("  markdown <file.md> [output] - Create presentation from markdown")
         return
 
     command = sys.argv[1]
@@ -24,6 +25,10 @@ def main() -> None:
         create_demo()
     elif command == "create" and len(sys.argv) > 2:
         create_presentation(sys.argv[2])
+    elif command == "markdown" and len(sys.argv) > 2:
+        markdown_file = sys.argv[2]
+        output_name = sys.argv[3] if len(sys.argv) > 3 else None
+        create_from_markdown(markdown_file, output_name)
     else:
         print(f"Unknown command: {command}")
 
@@ -80,6 +85,35 @@ def create_presentation(name: str) -> None:
     builder.save(output_path)
 
     print(f"Presentation created: {output_path}")
+
+
+def create_from_markdown(markdown_file: str, output_name: str | None = None) -> None:
+    """Create a presentation from a markdown template file."""
+    markdown_path = Path(markdown_file)
+
+    if not markdown_path.exists():
+        print(f"Error: Markdown file not found: {markdown_file}")
+        return
+
+    print(f"Creating presentation from markdown: {markdown_file}")
+
+    try:
+        builder = PresentationBuilder.from_markdown(markdown_path)
+
+        # Determine output name
+        if output_name:
+            output_path = Path(f"outputs/{output_name}.pptx")
+        else:
+            # Use markdown filename without extension
+            output_path = Path(f"outputs/{markdown_path.stem}.pptx")
+
+        builder.save(output_path)
+
+        print(f"Presentation created: {output_path}")
+        print(f"Slides created: {builder.get_slide_count()}")
+
+    except Exception as e:
+        print(f"Error creating presentation: {e}")
 
 
 if __name__ == "__main__":
