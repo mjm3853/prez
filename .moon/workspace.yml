@@ -1,0 +1,8 @@
+$schema: 'https://moonrepo.dev/schemas/workspace.json'
+
+# Projects configuration
+projects:
+  - '.'
+
+# Version constraint
+versionConstraint: '>=1.0.0'

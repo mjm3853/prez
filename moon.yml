@@ -1,0 +1,75 @@
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+# Project configuration
+type: 'application'
+language: 'python'
+
+# File groups for task inputs/outputs
+fileGroups:
+  sources:
+    - 'src/**/*'
+  tests:
+    - 'tests/**/*'
+  configs:
+    - 'pyproject.toml'
+    - 'uv.lock'
+    - '.ruff.toml'
+
+# Tasks
+tasks:
+  install:
+    command: 'uv sync'
+    description: 'Install dependencies'
+    inputs:
+      - 'pyproject.toml'
+      - 'uv.lock'
+
+  test:
+    command: 'uv run pytest'
+    description: 'Run tests'
+    deps:
+      - 'install'
+    inputs:
+      - '@group(tests)'
+      - '@group(sources)'
+
+  lint:
+    command: 'uv run ruff check'
+    description: 'Run linter'
+    deps:
+      - 'install'
+    inputs:
+      - '@group(sources)'
+      - '@group(tests)'
+
+  format:
+    command: 'uv run black .'
+    description: 'Format code'
+    deps:
+      - 'install'
+    inputs:
+      - '@group(sources)'
+      - '@group(tests)'
+
+  typecheck:
+    command: 'uv run mypy src'
+    description: 'Type check code'
+    deps:
+      - 'install'
+    inputs:
+      - '@group(sources)'
+
+  demo:
+    command: 'uv run python examples/demo.py'
+    description: 'Run demo presentation'
+    deps:
+      - 'install'
+    inputs:
+      - '@group(sources)'
+      - 'examples/**/*'
+
+  dev:
+    command: 'uv run python -m prez'
+    description: 'Run CLI'
+    deps:
+      - 'install'
